@@ -108,7 +108,8 @@ router.post("/register", upload.single('avatar'), (req, res) => {
                     avatar: `./public/uploads/${req.file}`
                 });
                 const filePath = path.join(__dirname, "../public/uploads/");
-                fs.rename(filePath + req.file.filename, req.file.fieldname + '-' + newUser._id + path.extname(req.file.originalname), (error) => {
+                // fs.rename(filePath + req.file.filename + path.extname(req.file.originalname), req.file.fieldname + '-' + newUser._id + path.extname(req.file.originalname), (error) => {
+                fs.rename(filePath + req.file.filename + path.extname(req.file.originalname), req.file.fieldname + '-' + newUser._id + path.extname(req.file.originalname), (error) => {
                     if (error) {
                         return console.log(`Error: ${error}`);
                     }
