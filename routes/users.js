@@ -22,13 +22,19 @@ router.get("/register", forwardAuthenticated, (req, res) => {
 
 // Register
 router.post("/register", (req, res) => {
-    const {name, email, password, password2} = req.body;
+    //const {name, email, password, password2||avatar} = req.body;
+    const name = req.body.name
+    const email = req.body.email
+    const password = req.body.password;
+    const password2 = req.body.password2;
+    const avatar = req.body.avatar;
+
     let errors = [];
 
     if (!name || !email || !password || !password2) {
         errors.push({msg: "Please enter all fields"});
     }
-    if (password.length < 6) {
+    if (password && password.length < 6) {
         errors.push({msg: "Password must be at least 6 characters"});
     }
     if (password != password2) {
@@ -63,7 +69,6 @@ router.post("/register", (req, res) => {
                     name,
                     email,
                     password,
-                    filepath
                 });
                 //Set The Storage Engine
                 const storage = multer.diskStorage({
@@ -100,6 +105,7 @@ router.post("/register", (req, res) => {
 
 
                 newUser.filepath = storage;
+                console.log(newUser);
                 bcrypt.genSalt(10, (err, salt) => {
                     bcrypt.hash(newUser.password, salt, (err, hash) => {
                         if (err) throw err;
