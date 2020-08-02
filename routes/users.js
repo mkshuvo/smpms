@@ -4,11 +4,17 @@ const bcrypt = require("bcryptjs");
 const passport = require("passport");
 const multer = require('multer');
 const path = require('path');
+const bodyParser = require('body-parser')
+const app = express()
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
 
-
+// parse application/json
+app.use(bodyParser.json())
 // Load User model
 const User = require("../models/User");
 const {forwardAuthenticated} = require("../config/auth");
+
 
 // Login Page
 router.get("/login", forwardAuthenticated, (req, res) => {
@@ -30,16 +36,16 @@ router.post("/register", (req, res) => {
     const avatar = req.body.avatar;
 
     let errors = [];
-
-    if (!name || !email || !password || !password2) {
-        errors.push({msg: "Please enter all fields"});
-    }
-    if (password && password.length < 6) {
-        errors.push({msg: "Password must be at least 6 characters"});
-    }
-    if (password != password2) {
-        errors.push({msg: "Passwords do not match"});
-    }
+    //
+    // if (!name || !email || !password || !password2) {
+    //     errors.push({msg: "Please enter all fields"});
+    // }
+    // if (password && password.length < 6) {
+    //     errors.push({msg: "Password must be at least 6 characters"});
+    // }
+    // if (password != password2) {
+    //     errors.push({msg: "Passwords do not match"});
+    // }
 
     if (errors.length > 0) {
         res.render("register", {
@@ -104,7 +110,8 @@ router.post("/register", (req, res) => {
                 }
 
 
-                newUser.filepath = storage;
+                console.log(newUser);
+                newUser.avatar = storage;
                 console.log(newUser);
                 bcrypt.genSalt(10, (err, salt) => {
                     bcrypt.hash(newUser.password, salt, (err, hash) => {

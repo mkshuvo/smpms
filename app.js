@@ -7,7 +7,13 @@ const session = require("express-session");
 const multer = require('multer');
 const path = require('path');
 var dotenv = require('dotenv').config();
+const bodyParser =  require('body-parser');
 const app = express();
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
 app.use(express.static("public"));
 
 // Passport Config
