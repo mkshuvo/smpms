@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const fs = require('fs');
 const bcrypt = require("bcryptjs");
 const passport = require("passport");
 const multer = require('multer');
@@ -13,27 +14,55 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 // Load User model
 const User = require("../models/User");
-const {forwardAuthenticated} = require("../config/auth");
+const { forwardAuthenticated } = require("../config/auth");
 
 
 // Login Page
 router.get("/login", forwardAuthenticated, (req, res) => {
-    res.render("login", {title: "Login", layout: "layout"});
+    res.render("login", { title: "Login", layout: "layout" });
 });
 
 // Register Page
 router.get("/register", forwardAuthenticated, (req, res) => {
-    res.render("register", {title: "Register", layout: "layout"});
+    res.render("register", { title: "Register", layout: "layout" });
 });
 
+const storage = multer.diskStorage({
+    destination: './public/uploads/'
+});
+
+// Init Upload
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 1000000 },
+    fileFilter: function (req, file, cb) {
+        checkFileType(file, cb);
+    }
+});
+
+// Check File Type
+function checkFileType(file, cb) {
+    // Allowed ext
+    const filetypes = /jpeg|jpg|png|gif/;
+    // Check ext
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    // Check mime
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+        return cb(null, true);
+    } else {
+        cb('Error: Images Only!');
+    }
+}
 // Register
-router.post("/register", (req, res) => {
+router.post("/register", upload.single('avatar'), (req, res) => {
     //const {name, email, password, password2||avatar} = req.body;
     const name = req.body.name
     const email = req.body.email
     const password = req.body.password;
     const password2 = req.body.password2;
-    const avatar = req.body.avatar;
+
 
     let errors = [];
     //
@@ -58,9 +87,9 @@ router.post("/register", (req, res) => {
             layout: "Layout",
         });
     } else {
-        User.findOne({email: email}).then((user) => {
+        User.findOne({ email: email }).then((user) => {
             if (user) {
-                errors.push({msg: "Email already exists"});
+                errors.push({ msg: "Email already exists" });
                 res.render("register", {
                     errors,
                     name,
@@ -71,47 +100,20 @@ router.post("/register", (req, res) => {
                     layout: "Layout",
                 });
             } else {
+                const directory = "/images/";
                 const newUser = new User({
                     name,
                     email,
                     password,
+                    avatar: `./public/uploads/${req.file}`
                 });
-                //Set The Storage Engine
-                const storage = multer.diskStorage({
-                    destination: './public/uploads/',
-                    filename: function (req, file, cb) {
-                        cb(null, file.fieldname + '-' + newUser._id + path.extname(file.originalname));
+                const filePath = path.join(__dirname, "../public/uploads/");
+                fs.rename(filePath + req.file.filename, req.file.fieldname + '-' + newUser._id + path.extname(req.file.originalname), (error) => {
+                    if (error) {
+                        return console.log(`Error: ${error}`);
                     }
                 });
-
-                // Init Upload
-                const upload = multer({
-                    storage: storage,
-                    limits: {fileSize: 1000000},
-                    fileFilter: function (req, file, cb) {
-                        checkFileType(file, cb);
-                    }
-                }).single('avatar');
-
-                // Check File Type
-                function checkFileType(file, cb) {
-                    // Allowed ext
-                    const filetypes = /jpeg|jpg|png|gif/;
-                    // Check ext
-                    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-                    // Check mime
-                    const mimetype = filetypes.test(file.mimetype);
-
-                    if (mimetype && extname) {
-                        return cb(null, true);
-                    } else {
-                        cb('Error: Images Only!');
-                    }
-                }
-
-
-                console.log(newUser);
-                newUser.avatar = storage;
+                newUser.avatar = 'public/uploads/' + req.file.fieldname + '-' + newUser._id + path.extname(req.file.originalname);
                 console.log(newUser);
                 bcrypt.genSalt(10, (err, salt) => {
                     bcrypt.hash(newUser.password, salt, (err, hash) => {
